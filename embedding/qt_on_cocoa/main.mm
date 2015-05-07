@@ -32,15 +32,18 @@
 ****************************************************************************/
 
 #include "rasterwindow.h"
+#include "widgetwindow.h"
 
 #include <QtGui>
-#include <QtWidgets/QtWidgets>
+#include <QtWidgets>
+#include <QtQuick>
 
 #include <Cocoa/Cocoa.h>
 
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
     QGuiApplication *m_app;
     QWindow *m_window;
+    QWidget *m_widget;
 }
 - (AppDelegate *) initWithArgc:(int)argc argv:(const char **)argv;
 - (void) applicationWillFinishLaunching: (NSNotification *)notification;
@@ -51,7 +54,9 @@
 @implementation AppDelegate
 - (AppDelegate *) initWithArgc:(int)argc argv:(const char **)argv
 {
-    m_app = new QGuiApplication(argc, const_cast<char **>(argv));
+    m_app = new QApplication(argc, const_cast<char **>(argv));
+    m_window = 0;
+    m_widget = 0;
     return self;
 }
 
@@ -70,10 +75,25 @@
     [window setTitle:title];
     [window setBackgroundColor:[NSColor blueColor]];
 
-    // Create the QWindow, use its NSView as the content view
+    // QWidget
+#if 0
+    QWidget *widget = new RedWidget;
+    NSView *widgetView = reinterpret_cast<NSView *>(widget->winId());
+    [window setContentView:widgetView];
+    widget->show(); // ### widgets needs a show
+#endif
+
+    // Raster window
+#if 0
     m_window = new RasterWindow();
     [window setContentView:reinterpret_cast<NSView *>(m_window->winId())];
+#endif
 
+    // QQuickWindow
+#if 1
+    m_window = new QQuickView(QUrl::fromLocalFile("main.qml"));
+    [window setContentView:reinterpret_cast<NSView *>(m_window->winId())];
+#endif
     // Show the NSWindow
     [window makeKeyAndOrderFront:NSApp];
 }
@@ -82,6 +102,7 @@
 {
     Q_UNUSED(notification);
     delete m_window;
+    delete m_widget;
     delete m_app;
 }
 
